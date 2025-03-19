@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function AdminPage() {
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-3 mt-6">
       <Link href="/admin/menu">
         <button className="w-full bg-black text-white p-3 my-2 rounded-lg shadow">
           Manage Menu

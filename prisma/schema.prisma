@@ -17,7 +17,7 @@ datasource db {
 model MenuItem {
   id          String   @id @default(cuid())
   name        String
-  description String?
+  menuImage   String?
   price       Float
   toppings    Topping[]
 }
@@ -25,6 +25,7 @@ model MenuItem {
 model Topping {
   id          String  @id @default(cuid())
   name        String
+  toppingImage  String?
   price       Float
   menuItemId  String
   @@unique([name,price])
@@ -32,8 +33,10 @@ model Topping {
 }
 
 model Order {
-  id          String   @id @default(cuid())
-  items       Json
-  totalPrice  Float
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  items      Json
+  orderType  String
+  tableNumber String?  // optional for parcel orders
+  totalPrice Float
+  createdAt  DateTime @default(now())
 }

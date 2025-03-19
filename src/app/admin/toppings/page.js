@@ -16,7 +16,7 @@ export default function ToppingsPage() {
 
   useEffect(() => {
     if (selectedMenuItem) {
-      fetch(`/api/admin/toppings?menuItemId=${selectedMenuItem}`)
+      fetch(`/api/admin/toppings?menuItemId=₹{selectedMenuItem}`)
         .then((res) => res.json())
         .then((data) => setToppings(data));
     }
@@ -74,7 +74,7 @@ export default function ToppingsPage() {
               onChange={(e) => setPrice(e.target.value)}
               className="border p-2 rounded w-full"
             />
-            <button onClick={handleAddTopping} className="bg-green-500 text-white p-2 rounded">
+            <button onClick={handleAddTopping} className="bg-black text-white p-2 rounded">
               Add
             </button>
           </div>
@@ -82,7 +82,7 @@ export default function ToppingsPage() {
           <ul className="border p-4 rounded bg-gray-50">
             {toppings.map((topping, index) => (
               <li key={index} className="flex justify-between p-2 border-b">
-                {topping.name} - ${topping.price}
+                {topping.name} - ₹{topping.price}
               </li>
             ))}
           </ul>

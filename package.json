@@ -9,13 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.12.5",
     "@prisma/client": "^6.5.0",
     "iron-session": "^8.0.4",
     "next": "15.2.2",
     "pg": "^8.14.0",
     "prisma": "^6.5.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

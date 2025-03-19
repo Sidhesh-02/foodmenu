@@ -1,54 +1,48 @@
+// src/app/cart/page.js
 "use client";
 import { useCart } from "@/context/CartContext";
-import Link from "next/link";
 
 export default function CartPage() {
-  const { cart, removeFromCart } = useCart();
-
-  const totalPrice = cart.reduce(
-    (sum, item) =>
-      sum +
-      item.price +
-      item.toppings.reduce((toppingSum, topping) => toppingSum + topping.price, 0),
-    0
-  );
+  const { cart, totalAmount, removeFromCart } = useCart();
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-      
       {cart.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <>
           <ul className="space-y-4">
             {cart.map((item, index) => (
-              <li key={index} className="p-4 border rounded-lg shadow-md">
-                <h2 className="font-semibold text-lg">{item.name}</h2>
-                <p>Base Price: ${item.price.toFixed(2)}</p>
+              <li key={index} className="p-4 border rounded-lg">
+                <h2 className="font-semibold">{item.name}</h2>
+                <p>
+                  Price: ₹{item.price} x {item.quantity} = ₹{item.price * item.quantity}
+                </p>
                 {item.toppings.length > 0 && (
-                  <ul className="text-gray-600">
-                    {item.toppings.map((topping) => (
-                      <li key={topping.id}>+ {topping.name} (${topping.price.toFixed(2)})</li>
-                    ))}
-                  </ul>
+                  <div>
+                    <p>Toppings:</p>
+                    <ul>
+                      {item.toppings.map((topping, idx) => (
+                        <li key={idx}>
+                          {topping.name} (+₹{topping.price})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 <button
-                  onClick={() => removeFromCart(index)}
-                  className="mt-2 bg-black text-white px-4 py-2 rounded"
+                  onClick={() => removeFromCart(item.id, item.toppings)}
+                  className="mt-2 bg-red-500 text-white px-2 py-1 rounded"
                 >
                   Remove
                 </button>
               </li>
             ))}
           </ul>
-
-          <h2 className="text-xl font-bold mt-6">Total: ${totalPrice.toFixed(2)}</h2>
-          <Link href="/checkout">
-            <button className="mt-4 bg-black text-white px-4 py-2 rounded">
-              Proceed to Checkout
-            </button>
-          </Link>
+          <div className="mt-6 text-xl font-bold">
+            Total: ₹{totalAmount.toFixed(2)}
+          </div>
         </>
       )}
     </div>
