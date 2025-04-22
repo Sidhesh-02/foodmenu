@@ -13,6 +13,11 @@ export default function AdminPage() {
           Manage Toppings
         </button>
       </Link>
+      <Link href="/admin/orders" className="col-span-2">
+        <button className="w-full bg-blue-600 text-white p-3 my-2 rounded-lg shadow hover:bg-blue-700 transition">
+          View Orders
+        </button>
+      </Link>
     </div>
   );
 }

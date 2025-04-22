@@ -1,17 +1,16 @@
-// src/app/checkout/page.js
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { QRCodeCanvas } from "qrcode.react";
 import { useCart } from "@/context/CartContext";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { cart } = useCart();
-  const [orderType, setOrderType] = useState("restaurant"); // "restaurant" or "parcel"
+  const [orderType, setOrderType] = useState("restaurant");
   const [tableNumber, setTableNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [upiLink, setUpiLink] = useState("");
+  const [orderId, setOrderId] = useState("");
 
-  // Calculate total (example calculation; adjust as needed)
   const totalAmount = cart.reduce(
     (sum, item) =>
       sum +
@@ -24,7 +23,6 @@ export default function CheckoutPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Create the order on the backend, including order type and table number (if applicable)
     const orderData = {
       cart,
       orderType,
@@ -37,31 +35,27 @@ export default function CheckoutPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(orderData),
     });
+
     if (!res.ok) {
-      // Handle error
       setLoading(false);
       alert("Error creating order");
       return;
     }
+
     const { orderId } = await res.json();
+    setOrderId(orderId);
 
-    // Generate UPI deep link using merchant info from env variables and order details.
-    // The UPI link format:
-    // upi://pay?pa={merchant_upi}&pn={merchant_name}&tn=Payment+for+Order+{orderId}&am={totalAmount}&cu=INR&url={return_url}
-    const merchantUpi = process.env.NEXT_PUBLIC_UPI_MERCHANT_UPI; // e.g., "merchant@okaxis"
-    const merchantName = process.env.NEXT_PUBLIC_UPI_MERCHANT_NAME; // e.g., "My Restaurant"
-    const returnUrl = process.env.NEXT_PUBLIC_RETURN_URL || "http://localhost:3000/order-confirmed";
-    const upiLink = `upi://pay?pa=₹{encodeURIComponent(
+    const merchantUpi = process.env.NEXT_PUBLIC_UPI_MERCHANT_UPI;
+    const merchantName = process.env.NEXT_PUBLIC_UPI_MERCHANT_NAME;
+
+    const upiDeepLink = `upi://pay?pa=${encodeURIComponent(
       merchantUpi
-    )}&pn=₹{encodeURIComponent(merchantName)}&tn=₹{encodeURIComponent(
+    )}&pn=${encodeURIComponent(merchantName)}&tn=${encodeURIComponent(
       "Payment for Order " + orderId
-    )}&am=₹{encodeURIComponent(totalAmount)}&cu=INR&url=₹{encodeURIComponent(
-      returnUrl
-    )}`;
+    )}&am=${encodeURIComponent(totalAmount)}&cu=INR`;
 
-    // Redirect to the UPI deep link.
-    // On mobile, this should prompt a UPI app selection.
-    window.location.href = upiLink;
+    setUpiLink(upiDeepLink);
+    setLoading(false);
   };
 
   return (
@@ -71,10 +65,9 @@ export default function CheckoutPage() {
         className="max-w-md w-full bg-white p-6 rounded shadow"
       >
         <h1 className="text-2xl font-bold mb-4">Checkout</h1>
+
         <div className="mb-4">
-          <label className="block font-semibold mb-1">
-            Order Type:
-          </label>
+          <label className="block font-semibold mb-1">Order Type:</label>
           <select
             value={orderType}
             onChange={(e) => setOrderType(e.target.value)}
@@ -84,11 +77,10 @@ export default function CheckoutPage() {
             <option value="parcel">Parcel</option>
           </select>
         </div>
+
         {orderType === "restaurant" && (
           <div className="mb-4">
-            <label className="block font-semibold mb-1">
-              Table Number:
-            </label>
+            <label className="block font-semibold mb-1">Table Number:</label>
             <input
               type="text"
               value={tableNumber}
@@ -98,11 +90,11 @@ export default function CheckoutPage() {
             />
           </div>
         )}
+
         <div className="mb-4">
-          <p className="text-lg">
-            Total: ₹{totalAmount}
-          </p>
+          <p className="text-lg">Total: ₹{totalAmount}</p>
         </div>
+
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
@@ -110,6 +102,18 @@ export default function CheckoutPage() {
         >
           {loading ? "Processing..." : "Proceed to Payment"}
         </button>
+
+        {upiLink && (
+          <div className="mt-6 p-4 bg-gray-50 border rounded text-center">
+            <h2 className="text-lg font-semibold mb-2">
+              Scan to Pay for Order #{orderId}
+            </h2>
+            <QRCodeCanvas value={upiLink} size={200} includeMargin={true} />
+            <p className="mt-2 text-sm text-gray-600">
+              Use any UPI app like Paytm, PhonePe, GPay etc.
+            </p>
+          </div>
+        )}
       </form>
     </div>
   );

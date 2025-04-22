@@ -1,5 +1,5 @@
-// src/app/api/orders/route.js
 import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -7,13 +7,14 @@ export async function POST(req) {
   try {
     const { cart, orderType, tableNumber, totalAmount } = await req.json();
 
-    // Create an order in your database. Customize fields as needed.
     const order = await prisma.order.create({
       data: {
-        items: cart, // You may store the cart as JSON
+        items: cart,
         orderType,
         tableNumber,
         totalPrice: parseFloat(totalAmount),
+        paymentStatus: "pending",
+        isHandled: false,
       },
     });
 
@@ -25,6 +26,22 @@ export async function POST(req) {
     console.error(error);
     return new Response(
       JSON.stringify({ error: "Failed to create order" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(orders);
+  } catch (error) {
+    console.error(error);
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch orders" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

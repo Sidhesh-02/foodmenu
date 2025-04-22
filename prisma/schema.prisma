@@ -33,10 +33,12 @@ model Topping {
 }
 
 model Order {
-  id         String   @id @default(cuid())
-  items      Json
-  orderType  String
-  tableNumber String?  // optional for parcel orders
-  totalPrice Float
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  items         Json
+  orderType     String
+  tableNumber   String?  
+  totalPrice    Float
+  paymentStatus String   @default("pending")    // "pending" or "paid"
+  isHandled     Boolean  @default(false)        // admin ticks this to true
+  createdAt     DateTime @default(now())
 }
