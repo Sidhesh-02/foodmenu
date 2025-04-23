@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 export async function POST(req) {
   try {
     const { cart, orderType, tableNumber, totalAmount } = await req.json();
-
     const order = await prisma.order.create({
       data: {
         items: cart,
