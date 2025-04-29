@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; 
+import Tilt from "react-parallax-tilt";
 import Image from "next/image";
 
 
@@ -33,9 +34,11 @@ export function MenuItemCard({ menuItem }) {
   return (
     <div className="flex items-center justify-center p-2 border rounded-lg shadow-md hover:shadow-lg transition">
       <div className="pr-5">
+      <Tilt glareEnable={true} glareMaxOpacity={0.3} scale={1} transitionSpeed={400}>
         {menuItem.menuImage && (
           <Image src={menuItem.menuImage} alt={menuItem.name} width={200} height={300}/>
         )}
+      </Tilt>
       </div>
       <div className="p-4">
         <h2 className="text-xl font-bold">{menuItem.name}</h2>
