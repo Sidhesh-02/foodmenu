@@ -1,7 +1,8 @@
 "use client";
-import Image from "next/image";
+
 import { useState, useEffect } from "react";
-import Tilt from "react-parallax-tilt";
+import ThreeDViewer from "@/components/ThreeDViewer";
+import Image from "next/image";
 
 export default function AdminMenuPage() {
   const [menuItems, setMenuItems] = useState([]);
@@ -11,69 +12,117 @@ export default function AdminMenuPage() {
   const [file, setFile] = useState(null);
   const [useUpload, setUseUpload] = useState(false);
 
+  // Fetch menu items on mount
   useEffect(() => {
-    fetch("/api/admin/menu")
-      .then((res) => res.json())
-      .then((data) => setMenuItems(data));
+    const fetchMenuItems = async () => {
+      try {
+        const res = await fetch("/api/admin/menu");
+        if (!res.ok) throw new Error("Failed to fetch menu items");
+        const data = await res.json();
+        setMenuItems(data);
+      } catch (error) {
+        console.error(error);
+        alert("Unable to load menu items.");
+      }
+    };
+    fetchMenuItems();
   }, []);
 
+  // Add a new menu item
   const handleAddMenuItem = async () => {
-    let imageUrl = menuImage;
+    try {
+      let imageUrl = menuImage;
 
-    if (useUpload && file) {
-      const formData = new FormData();
-      formData.append("image", file);
+      if (useUpload && file) {
+        const formData = new FormData();
+        formData.append("image", file);
 
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
 
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || !uploadData?.url) {
-        alert("Image upload failed");
-        return;
+        if (!uploadRes.ok || !uploadData?.url) {
+          throw new Error("Image upload failed");
+        }
+
+        imageUrl = uploadData.url;
       }
 
-      imageUrl = uploadData.url;
-    }
+      const res = await fetch("/api/admin/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          price: parseFloat(price),
+          menuImage: imageUrl,
+        }),
+      });
 
-    const res = await fetch("/api/admin/menu", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        price: parseFloat(price),
-        menuImage: imageUrl,
-      }),
-    });
+      if (!res.ok) {
+        throw new Error("Failed to add menu item");
+      }
 
-    if (res.ok) {
       const newItem = await res.json();
-      setMenuItems([...menuItems, newItem]);
+      setMenuItems((prevItems) => [...prevItems, newItem]);
+
+      // Reset form
       setName("");
       setPrice("");
       setMenuImage("");
       setFile(null);
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "An error occurred while adding menu item.");
     }
   };
 
+  // Delete a menu item
   const handleDeleteMenuItem = async (menuItemId) => {
-    const res = await fetch("/api/admin/menu", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ menuItemId }),
-    });
-    if (res.ok) {
-      setMenuItems(menuItems.filter((item) => item.id !== menuItemId));
+    try {
+      const res = await fetch("/api/admin/menu", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItemId }),
+      });
+
+      if (!res.ok) throw new Error("Failed to delete menu item");
+
+      setMenuItems((prevItems) => prevItems.filter((item) => item.id !== menuItemId));
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "An error occurred while deleting menu item.");
     }
+  };
+
+  // Render either a 3D model or an image
+  const renderMedia = (url, alt) => {
+    const isGlb = url?.toLowerCase().endsWith(".glb");
+
+    return (
+      <div className="w-24 h-24 flex items-center justify-center bg-white rounded overflow-hidden">
+        {isGlb ? (
+          <ThreeDViewer modelUrl={url} />
+        ) : (
+          <Image
+            src={url}
+            alt={alt}
+            width={96}
+            height={96}
+            className="object-contain"
+          />
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Manage Menu</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">Manage Menu</h2>
 
-      <div className="flex flex-col md:flex-row gap-2">
+      {/* Form Inputs */}
+      <div className="flex flex-col md:flex-row gap-4">
         <input
           type="text"
           placeholder="Item Name"
@@ -81,7 +130,6 @@ export default function AdminMenuPage() {
           onChange={(e) => setName(e.target.value)}
           className="border p-2 rounded w-full"
         />
-
         <input
           type="number"
           placeholder="Price"
@@ -91,7 +139,8 @@ export default function AdminMenuPage() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-2 items-center">
+      {/* Image Upload / URL Section */}
+      <div className="flex flex-col md:flex-row gap-4 items-center">
         <select
           value={useUpload ? "upload" : "url"}
           onChange={(e) => setUseUpload(e.target.value === "upload")}
@@ -118,32 +167,33 @@ export default function AdminMenuPage() {
           />
         )}
 
-        <button onClick={handleAddMenuItem} className="bg-black text-white p-2 rounded">
-          Add
+        <button
+          onClick={handleAddMenuItem}
+          className="bg-black text-white p-2 rounded w-32"
+        >
+          Add Item
         </button>
       </div>
 
-      <ul className="border p-4 rounded bg-gray-50">
+      {/* Menu Items List */}
+      <ul className="border p-4 rounded bg-gray-50 space-y-4">
         {menuItems.map((item) => (
-          <li key={item.id} className="flex justify-between items-center p-2 border-b">
-            <div className="flex items-center gap-2">
-            <Tilt glareEnable={true} glareMaxOpacity={0.3} scale={1} transitionSpeed={400}>
-              <Image
-                src={item.menuImage}
-                alt={item.name}
-                width={150}
-                height={150}
-                className="rounded-lg object-cover"
-              />
-            </Tilt>
-              <span>{item.name} - ₹{item.price}</span>
+          <li
+            key={item.id}
+            className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-4 border rounded bg-white shadow"
+          >
+            <div className="flex items-center gap-6">
+              {renderMedia(item.menuImage, item.name)}
+              <div className="text-lg font-medium">
+                {item.name} - ₹{item.price}
+              </div>
             </div>
-            <span className="space-x-2">
-              <button onClick={() => handleDeleteMenuItem(item.id)} className="text-red-700">
-                Delete
-              </button>
-              <button className="text-blue-700">Edit</button>
-            </span>
+            <button
+              onClick={() => handleDeleteMenuItem(item.id)}
+              className="text-red-600 hover:text-red-800 font-semibold"
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>

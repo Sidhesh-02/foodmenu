@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
-import Tilt from "react-parallax-tilt";
+import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
-
+import ThreeDViewer from "@/components/ThreeDViewer";
 
 export function MenuItemCard({ menuItem }) {
   const { addToCart } = useCart();
@@ -31,16 +30,25 @@ export function MenuItemCard({ menuItem }) {
     return <p>No Item Available</p>;
   }
 
+  const isGlbFile = menuItem.menuImage?.toLowerCase().endsWith(".glb");
+
   return (
     <div className="flex items-center justify-center p-2 border rounded-lg shadow-md hover:shadow-lg transition">
-      <div className="pr-5">
-      <Tilt glareEnable={true} glareMaxOpacity={0.3} scale={1} transitionSpeed={400}>
-        {menuItem.menuImage && (
-          <Image src={menuItem.menuImage} alt={menuItem.name} width={200} height={300}/>
+      <div className="w-48 h-48 flex items-center justify-center">
+        {isGlbFile ? (
+          <ThreeDViewer modelUrl={menuItem.menuImage} />
+        ) : (
+          <Image
+            src={menuItem.menuImage}
+            alt={menuItem.name}
+            width={192}
+            height={192}
+            className="object-contain rounded"
+          />
         )}
-      </Tilt>
       </div>
-      <div className="p-4">
+
+      <div className="p-4 pr-10">
         <h2 className="text-xl font-bold">{menuItem.name}</h2>
         <p className="text-gray-600">₹{menuItem.price.toFixed(2)}</p>
         {menuItem.description && (
@@ -93,6 +101,7 @@ export function MenuItemCard({ menuItem }) {
     </div>
   );
 }
+
 
 
 export default function MenuPage() {
